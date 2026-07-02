@@ -14,7 +14,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
 	)
 
 	if (!result.Item) {
-		return { statusCode: 404, body: JSON.stringify({ message: 'User not found' }) }
+		return { statusCode: 404, body: JSON.stringify({ message: 'User was not found' }) }
 	}
 
 	const user = result.Item as User
