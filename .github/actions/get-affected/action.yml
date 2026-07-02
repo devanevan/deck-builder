@@ -1,0 +1,44 @@
+name: Get Affected
+description: Compute the pnpm workspace packages affected since a base ref, as matrices for use in downstream matrix jobs
+
+inputs:
+  base-sha:
+    description: Git ref/SHA to diff against. Falls back to the empty tree (i.e. everything affected) if empty or all-zero.
+    required: true
+
+outputs:
+  has-affected:
+    description: "true if any workspace package is affected"
+    value: ${{ steps.compute.outputs.has-affected }}
+  matrix:
+    description: JSON array of affected packages, e.g. [{"name":"@riftbound/shared","path":"packages/shared"}]
+    value: ${{ steps.compute.outputs.matrix }}
+  has-affected-apps:
+    description: "true if any deployable app (functions or web) is affected"
+    value: ${{ steps.compute.outputs.has-affected-apps }}
+  matrix-apps:
+    description: JSON array of affected deployable apps, e.g. [{"name":"@riftbound/functions","path":"packages/functions","target":"functions"}]
+    value: ${{ steps.compute.outputs.matrix-apps }}
+
+runs:
+  using: composite
+  steps:
+    - id: compute
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+      run: |
+        if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+          BASE_SHA=$(git hash-object -t tree /dev/null)
+        fi
+
+        PACKAGES=$(pnpm --filter "...[$BASE_SHA]" list --depth -1 --json | jq -c '[.[] | select(.name != "riftbound") | {name, path}]')
+        MATRIX_APPS=$(echo "$PACKAGES" | jq -c '[.[] | select(.name == "@riftbound/functions" or .name == "@riftbound/app") | . + {target: (if .name == "@riftbound/functions" then "functions" else "web" end)}]')
+
+        echo "matrix=$PACKAGES" >> "$GITHUB_OUTPUT"
+        echo "matrix-apps=$MATRIX_APPS" >> "$GITHUB_OUTPUT"
+        echo "has-affected=$([ "$(echo "$PACKAGES" | jq 'length')" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        echo "has-affected-apps=$([ "$(echo "$MATRIX_APPS" | jq 'length')" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+        echo "Affected packages: $(echo "$PACKAGES" | jq -r '.[].name' | tr '\n' ' ')"
+        echo "Affected apps: $(echo "$MATRIX_APPS" | jq -r '.[].name' | tr '\n' ' ')"
