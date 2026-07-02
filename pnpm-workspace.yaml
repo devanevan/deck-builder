@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  '@parcel/watcher': true
+  aws-sdk: false
+  classic-level: true
+  es5-ext: false
+  esbuild: true
+  serverless: true
+patchedDependencies:
+  react-native@0.86.0: patches/react-native@0.86.0.patch

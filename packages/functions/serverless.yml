@@ -1,0 +1,142 @@
+service: riftbound-functions
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    DECKS_TABLE: ${self:custom.decksTable}
+    USERS_TABLE: ${self:custom.usersTable}
+  httpApi:
+    authorizers:
+      cognitoJwt:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: ${self:custom.authorizerConfig.${sls:stage}.issuerUrl}
+        audience:
+          - ${self:custom.authorizerConfig.${sls:stage}.audience}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt DecksTable.Arn
+            - !GetAtt UsersTable.Arn
+
+custom:
+  decksTable: ${self:service}-decks-${sls:stage}
+  usersTable: ${self:service}-users-${sls:stage}
+  # serverless-offline never verifies JWT signatures (it just decodes the
+  # token), but it does check iss/aud against these values. The "local" stage
+  # entry is a placeholder issuer matched by scripts/mint-dev-token.ts -
+  # there is no real Cognito pool behind it. Real stages resolve to the
+  # actual Cognito User Pool created below.
+  authorizerConfig:
+    local:
+      issuerUrl: 'http://localhost/local-issuer'
+      audience: local-client-id
+    dev:
+      issuerUrl: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+      audience: !Ref UserPoolClient
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    exclude:
+      - '@aws-sdk/*'
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3002
+    ignoreJWTSignature: true
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+package:
+  individually: true
+
+functions:
+  getDecks:
+    handler: src/decks/getDecks.handler
+    events:
+      - httpApi:
+          path: /decks
+          method: get
+          authorizer:
+            name: cognitoJwt
+  getUser:
+    handler: src/users/getUser.handler
+    events:
+      - httpApi:
+          path: /users/me
+          method: get
+          authorizer:
+            name: cognitoJwt
+  updateUser:
+    handler: src/users/updateUser.handler
+    events:
+      - httpApi:
+          path: /users/me
+          method: put
+          authorizer:
+            name: cognitoJwt
+
+resources:
+  Resources:
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-${sls:stage}
+        AutoVerifiedAttributes:
+          - email
+        UsernameAttributes:
+          - email
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-${sls:stage}-client
+        UserPoolId: !Ref UserPool
+        GenerateSecret: false
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+    DecksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.decksTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: id
+            KeyType: RANGE
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+  Outputs:
+    UserPoolId:
+      Value: !Ref UserPool
+    UserPoolClientId:
+      Value: !Ref UserPoolClient

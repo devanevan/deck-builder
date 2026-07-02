@@ -1,0 +1,37 @@
+{
+  "name": "@riftbound/app",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@riftbound/shared": "workspace:*",
+    "@tamagui/config": "^1.121.6",
+    "@tamagui/core": "^1.121.6",
+    "@tamagui/font-inter": "^1.121.6",
+    "@tamagui/themes": "^1.121.6",
+    "expo": "~57.0.1",
+    "expo-font": "~13.3.1",
+    "expo-status-bar": "~57.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-web": "^0.21.2",
+    "tamagui": "^1.121.6"
+  },
+  "devDependencies": {
+    "@tamagui/babel-plugin": "^1.121.6",
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "export:web": "expo export --platform web",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "private": true
+}

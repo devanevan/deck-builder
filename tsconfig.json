@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "paths": {
+      "@riftbound/shared": ["./packages/shared/src/index.ts"]
+    }
+  },
+  "files": [],
+  "exclude": ["apps", "packages", "node_modules"]
+}

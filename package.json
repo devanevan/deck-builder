@@ -1,0 +1,19 @@
+{
+  "name": "riftbound",
+  "private": true,
+  "scripts": {
+    "start": "pnpm --filter @riftbound/app start",
+    "web": "pnpm --filter @riftbound/app web",
+    "android": "pnpm --filter @riftbound/app android",
+    "ios": "pnpm --filter @riftbound/app ios",
+    "build:functions": "pnpm --filter @riftbound/functions build",
+    "deploy:functions": "pnpm --filter @riftbound/functions sls:deploy",
+    "dev:functions": "pnpm --filter @riftbound/functions offline",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine affected packages
+        id: affected
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          PATHS=$(pnpm --filter "...[$BASE_SHA]" list --depth -1 --json | jq -r '.[].path' | tr '\n' ' ')
+          echo "paths=$PATHS" >> "$GITHUB_OUTPUT"
+          echo "Affected packages: $PATHS"
+
+      - name: Build affected packages
+        if: steps.affected.outputs.paths != ''
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: pnpm --filter "...[$BASE_SHA]" run build --if-present
+
+      - name: Lint affected packages
+        if: steps.affected.outputs.paths != ''
+        run: pnpm exec biome lint ${{ steps.affected.outputs.paths }}
+
+      - name: Test affected packages
+        if: steps.affected.outputs.paths != ''
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: pnpm --filter "...[$BASE_SHA]" run test --if-present

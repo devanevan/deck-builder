@@ -1,0 +1,36 @@
+{
+  "name": "@riftbound/functions",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "sls:deploy": "serverless deploy",
+    "sls:remove": "serverless remove",
+    "dynamodb:local": "tsx scripts/local-dynamodb.ts",
+    "sls:offline": "serverless offline start --stage local",
+    "offline": "concurrently -n dynamodb,api -c blue,green \"pnpm dynamodb:local\" \"pnpm sls:offline\"",
+    "dev:token": "tsx scripts/mint-dev-token.ts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
+    "@riftbound/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.143",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.1.0",
+    "concurrently": "^10.0.3",
+    "dynalite": "^4.0.0",
+    "esbuild": "^0.28.1",
+    "jsonwebtoken": "^9.0.3",
+    "serverless": "^3.40.0",
+    "serverless-esbuild": "^1.57.2",
+    "serverless-offline": "^14.7.4",
+    "tsx": "^4.22.4",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.expo/
+.tamagui/
+*.tsbuildinfo
+.serverless/
+.dynamodb/
+.esbuild/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+.claude

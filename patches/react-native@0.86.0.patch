@@ -1,0 +1,51 @@
+diff --git a/Libraries/BatchedBridge/NativeModules.js b/Libraries/BatchedBridge/NativeModules.js
+index c38eab148e98ab7246cfd1be2780d898c8f0c48f..97a7c5d0c599bc07d737708b6259d782d317ec20 100644
+--- a/Libraries/BatchedBridge/NativeModules.js
++++ b/Libraries/BatchedBridge/NativeModules.js
+@@ -184,12 +184,8 @@ function updateErrorWithErrorData(
+ let NativeModules: {[moduleName: string]: any, ...} = {};
+ if (global.nativeModuleProxy) {
+   NativeModules = global.nativeModuleProxy;
+-} else {
++} else if (global.__fbBatchedBridgeConfig) {
+   const bridgeConfig = global.__fbBatchedBridgeConfig;
+-  invariant(
+-    bridgeConfig,
+-    '__fbBatchedBridgeConfig is not set, cannot invoke native modules',
+-  );
+ 
+   const defineLazyObjectProperty =
+     require('../Utilities/defineLazyObjectProperty').default;
+diff --git a/src/private/devsupport/rndevtools/ReactDevToolsSettingsManager.web.js b/src/private/devsupport/rndevtools/ReactDevToolsSettingsManager.web.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..de6b24b58e6d312172a5d92252b50610b1bfebc8
+--- /dev/null
++++ b/src/private/devsupport/rndevtools/ReactDevToolsSettingsManager.web.js
+@@ -0,0 +1,27 @@
++/**
++ * Copyright (c) Meta Platforms, Inc. and affiliates.
++ *
++ * This source code is licensed under the MIT license found in the
++ * LICENSE file in the root directory of this source tree.
++ *
++ * @flow strict-local
++ * @format
++ */
++
++const GLOBAL_HOOK_SETTINGS = 'ReactDevTools::HookSettings';
++
++export function setGlobalHookSettings(settings: string) {
++  try {
++    window.localStorage.setItem(GLOBAL_HOOK_SETTINGS, settings);
++  } catch {}
++}
++
++export function getGlobalHookSettings(): ?string {
++  try {
++    const value = window.localStorage.getItem(GLOBAL_HOOK_SETTINGS);
++    if (typeof value === 'string') {
++      return value;
++    }
++  } catch {}
++  return null;
++}
