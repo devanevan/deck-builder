@@ -61,10 +61,24 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm --filter "${{ matrix.package.name }}" run build --if-present
+        run: pnpm --filter "${{ matrix.package.name }}" --if-present run build
 
       - name: Lint
         run: pnpm exec biome lint ${{ matrix.package.path }}
 
       - name: Test
-        run: pnpm --filter "${{ matrix.package.name }}" run test --if-present
+        run: pnpm --filter "${{ matrix.package.name }}" --if-present run test
+
+  get-status:
+    name: Get Status
+    runs-on: ubuntu-latest
+    needs: [get-affected, ci]
+    if: always()
+    steps:
+      - name: Success
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
