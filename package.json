@@ -6,6 +6,7 @@
     "web": "pnpm --filter @riftbound/app web",
     "android": "pnpm --filter @riftbound/app android",
     "ios": "pnpm --filter @riftbound/app ios",
+    "export:web": "pnpm --filter @riftbound/app export:web",
     "build:functions": "pnpm --filter @riftbound/functions build",
     "deploy:functions": "pnpm --filter @riftbound/functions sls:deploy",
     "dev:functions": "pnpm --filter @riftbound/functions offline",
