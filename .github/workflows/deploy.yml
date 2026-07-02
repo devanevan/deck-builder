@@ -10,10 +10,15 @@ permissions:
   contents: read
 
 jobs:
-  deploy-functions:
+  get-affected:
     runs-on: ubuntu-latest
+    outputs:
+      has-affected-apps: ${{ steps.affected.outputs.has-affected-apps }}
+      matrix-apps: ${{ steps.affected.outputs.matrix-apps }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         with:
@@ -27,6 +32,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Determine affected apps
+        id: affected
+        uses: ./.github/actions/get-affected
+        with:
+          base-sha: ${{ github.event.before }}
+
+  deploy:
+    name: Deploy (${{ matrix.app.target }})
+    needs: get-affected
+    if: needs.get-affected.outputs.has-affected-apps == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.get-affected.outputs.matrix-apps) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        if: matrix.app.target == 'functions'
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        if: matrix.app.target == 'functions'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        if: matrix.app.target == 'functions'
+        run: pnpm install --frozen-lockfile
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -34,20 +72,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
       - name: Deploy Lambda functions (Serverless Framework)
+        if: matrix.app.target == 'functions'
         run: pnpm deploy:functions
 
-  deploy-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
-
       - name: Trigger Amplify build
+        if: matrix.app.target == 'web'
         run: |
           aws amplify start-job \
             --app-id "${{ secrets.AMPLIFY_APP_ID }}" \
