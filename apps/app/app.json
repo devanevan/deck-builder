@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "deck-builder",
+    "slug": "deck-builder",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "riftbound",
+    "scheme": "deck-builder",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {

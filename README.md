@@ -1,6 +1,6 @@
-# Riftbound
+# Deck Builder
 
-Riftbound is a custom TCG (trading card game) deck builder, cross-platform (iOS, Android, Web) with a serverless AWS backend.
+Deck Builder is a custom TCG (trading card game) deck builder, cross-platform (iOS, Android, Web) with a serverless AWS backend.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ packages/shared/      # Shared TypeScript types (Card, Deck, User)
 packages/functions/   # AWS Lambda handlers
 ```
 
-`@riftbound/shared` is consumed by both `apps/app` and `packages/functions` via the `workspace:*` protocol.
+`@deck-builder/shared` is consumed by both `apps/app` and `packages/functions` via the `workspace:*` protocol.
 
 ## Getting Started
 

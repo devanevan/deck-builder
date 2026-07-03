@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
-import type { User } from '@riftbound/shared'
+import type { User } from '@deck-builder/shared'
 import { dynamoClient } from '../lib/dynamoClient'
 
 export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
