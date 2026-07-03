@@ -6,7 +6,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "paths": {
-      "@riftbound/shared": ["./packages/shared/src/index.ts"]
+      "@deck-builder/shared": ["./packages/shared/src/index.ts"]
     }
   },
   "files": [],

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Riftbound — a custom TCG (trading card game) deck builder. Cross-platform (iOS, Android, Web) with a serverless AWS backend.
+Deck Builder — a custom TCG (trading card game) deck builder. Cross-platform (iOS, Android, Web) with a serverless AWS backend.
 
 ## Tech Stack
 
@@ -24,7 +24,7 @@ packages/shared/    # Shared TypeScript types (Card, Deck, User)
 packages/functions/ # AWS Lambda handlers
 ```
 
-`@riftbound/shared` is consumed by both `apps/app` and `packages/functions` via the `workspace:*` protocol.
+`@deck-builder/shared` is consumed by both `apps/app` and `packages/functions` via the `workspace:*` protocol.
 
 ## Commands
 
@@ -76,7 +76,7 @@ Infra (API Gateway HTTP API, Cognito User Pool + Client, DynamoDB tables) is def
 ### Local dev (no AWS account needed)
 `pnpm dev:functions` runs the whole stack locally: `serverless-offline` emulates API Gateway + Lambda on `http://localhost:3000`, and `dynalite` (a pure-JS DynamoDB emulator, chosen over the official Docker/Java-based DynamoDB Local since neither is installed here) emulates DynamoDB on `localhost:8000` — table creation happens in `packages/functions/scripts/local-dynamodb.ts`. This all runs under a dedicated `local` stage (`serverless offline start --stage local`), not `dev`, so it never touches real AWS resources.
 
-Auth locally is mocked: `serverless-offline`'s `ignoreJWTSignature: true` (in `custom.serverless-offline`) skips signature verification entirely, but it still checks the token's `iss`/`aud` claims against `custom.authorizerConfig.local` in `serverless.yml`. Run `pnpm --filter @riftbound/functions dev:token [userId]` to mint a matching unsigned JWT for curl/Postman testing — it is **only** valid against the local stage; there is no real Cognito pool behind it. `packages/functions/src/lib/dynamoClient.ts` points the AWS SDK at `localhost:8000` when `process.env.IS_OFFLINE` is set (which `serverless-offline` sets automatically), and at real AWS otherwise.
+Auth locally is mocked: `serverless-offline`'s `ignoreJWTSignature: true` (in `custom.serverless-offline`) skips signature verification entirely, but it still checks the token's `iss`/`aud` claims against `custom.authorizerConfig.local` in `serverless.yml`. Run `pnpm --filter @deck-builder/functions dev:token [userId]` to mint a matching unsigned JWT for curl/Postman testing — it is **only** valid against the local stage; there is no real Cognito pool behind it. `packages/functions/src/lib/dynamoClient.ts` points the AWS SDK at `localhost:8000` when `process.env.IS_OFFLINE` is set (which `serverless-offline` sets automatically), and at real AWS otherwise.
 
 ### Expo Notes
 Expo version is **57** — always check https://docs.expo.dev/versions/v57.0.0/ before using any Expo API, as APIs change between versions. The Tamagui babel plugin is configured in `apps/app/babel.config.js` and must list `tamagui` in `components`.

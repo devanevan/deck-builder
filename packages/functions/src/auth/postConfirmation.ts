@@ -1,5 +1,5 @@
 import { PutCommand } from '@aws-sdk/lib-dynamodb'
-import type { User } from '@riftbound/shared'
+import type { User } from '@deck-builder/shared'
 import type { PostConfirmationConfirmSignUpTriggerEvent } from 'aws-lambda'
 
 import { dynamoClient } from '../lib/dynamoClient'

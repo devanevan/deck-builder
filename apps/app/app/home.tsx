@@ -13,7 +13,7 @@ export default function Home() {
 	return (
 		<YStack flex={1} alignItems='center' justifyContent='center' backgroundColor='$background' gap='$4'>
 			<Text fontSize='$6' fontWeight='bold' color='$color'>
-				Riftbound
+				Deck Builder
 			</Text>
 			<Text fontSize='$4' color='$color'>
 				Hello World

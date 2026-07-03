@@ -1,5 +1,5 @@
 {
-  "name": "@riftbound/functions",
+  "name": "@deck-builder/functions",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -16,7 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.600.0",
     "@aws-sdk/lib-dynamodb": "^3.600.0",
-    "@riftbound/shared": "workspace:*"
+    "@deck-builder/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.143",

@@ -1,10 +1,10 @@
 {
-  "name": "@riftbound/app",
+  "name": "@deck-builder/app",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
-    "@riftbound/shared": "workspace:*",
+    "@deck-builder/shared": "workspace:*",
     "@tamagui/config": "^1.121.6",
     "@tamagui/core": "^1.121.6",
     "@tamagui/font-inter": "^1.121.6",
