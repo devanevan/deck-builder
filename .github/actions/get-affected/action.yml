@@ -11,13 +11,13 @@ outputs:
     description: "true if any workspace package is affected"
     value: ${{ steps.compute.outputs.has-affected }}
   matrix:
-    description: JSON array of affected packages, e.g. [{"name":"@riftbound/shared","path":"packages/shared"}]
+    description: JSON array of affected packages, e.g. [{"name":"@deck-builder/shared","path":"packages/shared"}]
     value: ${{ steps.compute.outputs.matrix }}
   has-affected-apps:
-    description: "true if any deployable app (functions) is affected"
+    description: "true if any deployable app (functions or web app) is affected"
     value: ${{ steps.compute.outputs.has-affected-apps }}
   matrix-apps:
-    description: JSON array of affected deployable apps, e.g. [{"name":"@riftbound/functions","path":"packages/functions","target":"functions"}]
+    description: JSON array of affected deployable apps, e.g. [{"name":"@deck-builder/functions","path":"packages/functions","target":"functions"}]
     value: ${{ steps.compute.outputs.matrix-apps }}
 
 runs:
@@ -32,8 +32,11 @@ runs:
           BASE_SHA=$(git hash-object -t tree /dev/null)
         fi
 
-        PACKAGES=$(pnpm --filter "...[$BASE_SHA]" list --depth -1 --json | jq -c '[.[] | select(.name != "riftbound") | {name, path}]')
-        MATRIX_APPS=$(echo "$PACKAGES" | jq -c '[.[] | select(.name == "@riftbound/functions") | . + {target: "functions"}]')
+        PACKAGES=$(pnpm --filter "...[$BASE_SHA]" list --depth -1 --json | jq -c '[.[] | select(.name != "deck-builder") | {name, path}]')
+        MATRIX_APPS=$(echo "$PACKAGES" | jq -c '
+          [.[] | select(.name == "@deck-builder/functions") | . + {target: "functions"}]
+          + [.[] | select(.name == "@deck-builder/app") | . + {target: "app"}]
+        ')
 
         echo "matrix=$PACKAGES" >> "$GITHUB_OUTPUT"
         echo "matrix-apps=$MATRIX_APPS" >> "$GITHUB_OUTPUT"
