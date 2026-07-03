@@ -8,5 +8,12 @@ allowBuilds:
   es5-ext: false
   esbuild: true
   serverless: true
+minimumReleaseAgeExclude:
+  - '@expo/env@2.4.1'
+  - '@expo/metro-runtime@57.0.3'
+  - '@expo/schema-utils@57.0.1'
+  - '@expo/ui@57.0.3'
+  - expo-constants@57.0.3
+  - expo-router@57.0.3
 patchedDependencies:
   react-native@0.86.0: patches/react-native@0.86.0.patch
