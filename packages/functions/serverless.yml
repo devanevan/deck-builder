@@ -88,6 +88,8 @@ functions:
           method: put
           authorizer:
             name: cognitoJwt
+  postConfirmation:
+    handler: src/auth/postConfirmation.handler
 
 resources:
   Resources:
@@ -99,6 +101,15 @@ resources:
           - email
         UsernameAttributes:
           - email
+        LambdaConfig:
+          PostConfirmation: !GetAtt PostConfirmationLambdaFunction.Arn
+    PostConfirmationInvocationPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !GetAtt PostConfirmationLambdaFunction.Arn
+        Action: lambda:InvokeFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
