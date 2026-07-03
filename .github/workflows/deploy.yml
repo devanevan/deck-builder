@@ -97,26 +97,12 @@ jobs:
         if: matrix.app.target == 'functions'
         run: pnpm deploy:functions
 
-      - name: Build web app
-        if: matrix.app.target == 'app'
-        run: pnpm export:web
-
-      - name: Zip web app artifact
-        if: matrix.app.target == 'app'
-        run: cd apps/app/dist && zip -rq ../../../deploy.zip .
-
       - name: Deploy web app to Amplify
         if: matrix.app.target == 'app'
         env:
           AMPLIFY_APP_ID: ${{ secrets.AMPLIFY_APP_ID }}
         run: |
-          DEPLOYMENT=$(aws amplify create-deployment --app-id "$AMPLIFY_APP_ID" --branch-name main)
-          UPLOAD_URL=$(echo "$DEPLOYMENT" | jq -r '.zipUploadUrl')
-          JOB_ID=$(echo "$DEPLOYMENT" | jq -r '.jobId')
-
-          curl -sSf -X PUT -T deploy.zip "$UPLOAD_URL"
-
-          aws amplify start-deployment \
+          aws amplify start-job \
             --app-id "$AMPLIFY_APP_ID" \
             --branch-name main \
-            --job-id "$JOB_ID"
+            --job-type RELEASE
