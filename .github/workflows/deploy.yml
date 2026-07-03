@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which app to deploy
+        type: choice
+        default: all
+        options:
+          - all
+          - functions
+          - app
 
 permissions:
   id-token: write
@@ -13,8 +23,8 @@ jobs:
   get-affected:
     runs-on: ubuntu-latest
     outputs:
-      has-affected-apps: ${{ steps.affected.outputs.has-affected-apps }}
-      matrix-apps: ${{ steps.affected.outputs.matrix-apps }}
+      has-affected-apps: ${{ steps.filtered.outputs.has-affected-apps }}
+      matrix-apps: ${{ steps.filtered.outputs.matrix-apps }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,7 +46,22 @@ jobs:
         id: affected
         uses: ./.github/actions/get-affected
         with:
+          # workflow_dispatch has no "before" SHA, so this falls back to
+          # diffing against the empty tree, i.e. everything is affected.
           base-sha: ${{ github.event.before }}
+
+      - name: Filter apps by manual target selection
+        id: filtered
+        env:
+          TARGET: ${{ github.event.inputs.target || 'all' }}
+          MATRIX_APPS: ${{ steps.affected.outputs.matrix-apps }}
+        run: |
+          if [ "$TARGET" != "all" ]; then
+            MATRIX_APPS=$(echo "$MATRIX_APPS" | jq -c --arg t "$TARGET" '[.[] | select(.target == $t)]')
+          fi
+
+          echo "matrix-apps=$MATRIX_APPS" >> "$GITHUB_OUTPUT"
+          echo "has-affected-apps=$([ "$(echo "$MATRIX_APPS" | jq 'length')" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   deploy:
     name: Deploy (${{ matrix.app.target }})
