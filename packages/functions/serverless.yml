@@ -8,6 +8,7 @@ provider:
   environment:
     DECKS_TABLE: ${self:custom.decksTable}
     USERS_TABLE: ${self:custom.usersTable}
+    CARDS_TABLE: ${self:custom.cardsTable}
   httpApi:
     authorizers:
       cognitoJwt:
@@ -29,10 +30,19 @@ provider:
           Resource:
             - !GetAtt DecksTable.Arn
             - !GetAtt UsersTable.Arn
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:BatchWriteItem
+          Resource:
+            - !GetAtt CardsTable.Arn
+            - !Sub '${CardsTable.Arn}/index/*'
 
 custom:
   decksTable: ${self:service}-decks-${sls:stage}
   usersTable: ${self:service}-users-${sls:stage}
+  cardsTable: ${self:service}-cards-${sls:stage}
   # serverless-offline never verifies JWT signatures (it just decodes the
   # token), but it does check iss/aud against these values. The "local" stage
   # entry is a placeholder issuer matched by scripts/mint-dev-token.ts -
@@ -90,6 +100,17 @@ functions:
             name: cognitoJwt
   postConfirmation:
     handler: src/auth/postConfirmation.handler
+  getCards:
+    handler: src/cards/getCards.handler
+    events:
+      - httpApi:
+          path: /cards
+          method: get
+  syncCards:
+    handler: src/cards/syncCards.handler
+    timeout: 60
+    events:
+      - schedule: rate(1 day)
 
 resources:
   Resources:
@@ -101,6 +122,13 @@ resources:
           - email
         UsernameAttributes:
           - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: false
         LambdaConfig:
           PostConfirmation: !GetAtt PostConfirmationLambdaFunction.Arn
     PostConfirmationInvocationPermission:
@@ -145,6 +173,38 @@ resources:
         KeySchema:
           - AttributeName: id
             KeyType: HASH
+    CardsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.cardsTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: cardType
+            AttributeType: S
+          - AttributeName: setId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: TypeIndex
+            KeySchema:
+              - AttributeName: cardType
+                KeyType: HASH
+              - AttributeName: id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: SetIndex
+            KeySchema:
+              - AttributeName: setId
+                KeyType: HASH
+              - AttributeName: id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
 
   Outputs:
     UserPoolId:

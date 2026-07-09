@@ -1,13 +1,12 @@
-import { Link, router } from 'expo-router'
+import { router } from 'expo-router'
 import { useState } from 'react'
 import { Button, Input, Text, YStack } from 'tamagui'
 
 import { useAuth } from '../src/auth/AuthContext'
 
-export default function Login() {
-	const { signIn } = useAuth()
+export default function ForgotPassword() {
+	const { forgotPassword } = useAuth()
 	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -15,10 +14,10 @@ export default function Login() {
 		setError(null)
 		setIsSubmitting(true)
 		try {
-			await signIn(email, password)
-			router.replace('/home')
+			await forgotPassword(email)
+			router.replace({ pathname: '/reset-password', params: { email } })
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Failed to sign in')
+			setError(err instanceof Error ? err.message : 'Failed to send reset code')
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -34,8 +33,9 @@ export default function Login() {
 			padding='$4'
 		>
 			<Text fontSize='$6' fontWeight='bold' color='$color'>
-				Log in
+				Reset your password
 			</Text>
+			<Text color='$color'>Enter your email and we'll send you a reset code</Text>
 			<Input
 				width='100%'
 				placeholder='Email'
@@ -44,23 +44,10 @@ export default function Login() {
 				value={email}
 				onChangeText={setEmail}
 			/>
-			<Input
-				width='100%'
-				placeholder='Password'
-				secureTextEntry
-				value={password}
-				onChangeText={setPassword}
-			/>
 			{error && <Text color='$red10'>{error}</Text>}
 			<Button width='100%' onPress={onSubmit} disabled={isSubmitting}>
-				{isSubmitting ? 'Logging in…' : 'Log in'}
+				{isSubmitting ? 'Sending…' : 'Send reset code'}
 			</Button>
-			<Link href='/register'>
-				<Text color='$color'>Need an account? Register</Text>
-			</Link>
-			<Link href='/forgot-password'>
-				<Text color='$color'>Forgot password?</Text>
-			</Link>
 		</YStack>
 	)
 }

@@ -8,6 +8,7 @@ export interface Deck {
 	userId: string
 	name: string
 	description?: string
+	legendId: string
 	cards: DeckCard[]
 	createdAt: string
 	updatedAt: string

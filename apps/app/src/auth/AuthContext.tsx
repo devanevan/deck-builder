@@ -26,6 +26,8 @@ type AuthState = {
 	confirmSignUp: (email: string, code: string) => Promise<void>
 	signIn: (email: string, password: string) => Promise<void>
 	signOut: () => Promise<void>
+	forgotPassword: (email: string) => Promise<void>
+	confirmForgotPassword: (email: string, code: string, newPassword: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -113,6 +115,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
 		setEmail(null)
 	}
 
+	const forgotPassword = (email: string) =>
+		new Promise<void>((resolve, reject) => {
+			const cognitoUser = new CognitoUser({ Username: email, Pool: userPool })
+			cognitoUser.forgotPassword({
+				onSuccess: () => resolve(),
+				onFailure: (error) => reject(error),
+			})
+		})
+
+	const confirmForgotPassword = (email: string, code: string, newPassword: string) =>
+		new Promise<void>((resolve, reject) => {
+			const cognitoUser = new CognitoUser({ Username: email, Pool: userPool })
+			cognitoUser.confirmPassword(code, newPassword, {
+				onSuccess: () => resolve(),
+				onFailure: (error) => reject(error),
+			})
+		})
+
 	const value: AuthState = {
 		isLoading,
 		isAuthenticated: email !== null,
@@ -121,6 +141,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 		confirmSignUp,
 		signIn,
 		signOut,
+		forgotPassword,
+		confirmForgotPassword,
 	}
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

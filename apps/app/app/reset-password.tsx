@@ -1,13 +1,14 @@
-import { Link, router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Button, Input, Text, YStack } from 'tamagui'
 
 import { useAuth } from '../src/auth/AuthContext'
 
-export default function Login() {
-	const { signIn } = useAuth()
-	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
+export default function ResetPassword() {
+	const { confirmForgotPassword } = useAuth()
+	const { email } = useLocalSearchParams<{ email: string }>()
+	const [code, setCode] = useState('')
+	const [newPassword, setNewPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -15,10 +16,10 @@ export default function Login() {
 		setError(null)
 		setIsSubmitting(true)
 		try {
-			await signIn(email, password)
-			router.replace('/home')
+			await confirmForgotPassword(email, code, newPassword)
+			router.replace('/login')
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Failed to sign in')
+			setError(err instanceof Error ? err.message : 'Failed to reset password')
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -34,33 +35,27 @@ export default function Login() {
 			padding='$4'
 		>
 			<Text fontSize='$6' fontWeight='bold' color='$color'>
-				Log in
+				Enter new password
 			</Text>
+			<Text color='$color'>Enter the code sent to {email}</Text>
 			<Input
 				width='100%'
-				placeholder='Email'
-				autoCapitalize='none'
-				keyboardType='email-address'
-				value={email}
-				onChangeText={setEmail}
+				placeholder='Reset code'
+				keyboardType='number-pad'
+				value={code}
+				onChangeText={setCode}
 			/>
 			<Input
 				width='100%'
-				placeholder='Password'
+				placeholder='New password'
 				secureTextEntry
-				value={password}
-				onChangeText={setPassword}
+				value={newPassword}
+				onChangeText={setNewPassword}
 			/>
 			{error && <Text color='$red10'>{error}</Text>}
 			<Button width='100%' onPress={onSubmit} disabled={isSubmitting}>
-				{isSubmitting ? 'Logging in…' : 'Log in'}
+				{isSubmitting ? 'Resetting…' : 'Reset password'}
 			</Button>
-			<Link href='/register'>
-				<Text color='$color'>Need an account? Register</Text>
-			</Link>
-			<Link href='/forgot-password'>
-				<Text color='$color'>Forgot password?</Text>
-			</Link>
 		</YStack>
 	)
 }
