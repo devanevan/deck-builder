@@ -91,7 +91,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-2' }}
 
       - name: Deploy Lambda functions (Serverless Framework)
         if: matrix.app.target == 'functions'
