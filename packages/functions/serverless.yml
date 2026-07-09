@@ -10,6 +10,7 @@ provider:
     USERS_TABLE: ${self:custom.usersTable}
     CARDS_TABLE: ${self:custom.cardsTable}
   httpApi:
+    cors: true
     authorizers:
       cognitoJwt:
         type: jwt
