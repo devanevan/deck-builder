@@ -11,6 +11,7 @@
     "sls:offline": "serverless offline start --stage local",
     "offline": "concurrently -n dynamodb,api -c blue,green \"pnpm dynamodb:local\" \"pnpm sls:offline\"",
     "dev:token": "tsx scripts/mint-dev-token.ts",
+    "sync:cards": "IS_OFFLINE=true CARDS_TABLE=riftbound-functions-cards-local tsx scripts/sync-cards.ts",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
