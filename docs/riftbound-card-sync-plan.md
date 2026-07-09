@@ -1,10 +1,20 @@
 # Riftbound Card Database Sync — Plan
 
-Status: **ready to implement**. Supersedes the earlier plan that targeted Riot's
-official `riftbound-content-v1` API (blocked on Developer Portal key approval).
-That approach is dropped in favor of [Riftcodex](https://riftcodex.com), an
-unofficial, public, no-auth-required REST API for Riftbound card data
-(`https://api.riftcodex.com`, docs at `/docs`, OpenAPI at `/openapi.json`).
+Status: **implemented, manual sync only**. Supersedes the earlier plan that
+targeted Riot's official `riftbound-content-v1` API (blocked on Developer
+Portal key approval). That approach is dropped in favor of
+[Riftcodex](https://riftcodex.com), an unofficial, public, no-auth-required
+REST API for Riftbound card data (`https://api.riftcodex.com`, docs at
+`/docs`, OpenAPI at `/openapi.json`).
+
+**Riftcodex sits behind Cloudflare, which 403s requests from AWS Lambda's
+egress IPs** (confirmed: identical request succeeds from a non-AWS machine,
+fails with `403 Forbidden` from the deployed Lambda). There's no documented
+UA/auth workaround. As a result, `syncCards` is **not** deployed as a
+scheduled Lambda — it's run manually from a developer machine via
+`pnpm --filter @deck-builder/functions sync:cards`. If Riftcodex allowlists
+the Lambda's IP in the future (pending an email to `support@riftcodex.com`),
+the EventBridge schedule can be reinstated.
 
 ## Goal
 
@@ -83,13 +93,14 @@ once card data is queryable, so it needs the `CardsTable` populated first.
    - GSI on `classification.type` to cheaply fetch all `Legend` cards for deck-builder UI.
    - `BillingMode: PAY_PER_REQUEST`, matching `DecksTable`/`UsersTable`.
 
-3. **Sync Lambda** — `packages/functions/src/cards/syncCards.ts`
+3. **Sync script** — `packages/functions/src/cards/syncCards.ts`
    - Paginates `GET https://api.riftcodex.com/cards?page=N&size=100` until exhausted.
    - No secret/SSM parameter needed (no auth).
    - Batch-writes to `CardsTable` (`BatchWriteCommand`, chunked to 25 items).
-   - Triggered by an EventBridge `schedule` event in `serverless.yml` (daily to
-     start).
-   - Not behind a JWT authorizer — scheduled invocation, not an HTTP route.
+   - **Not deployed as a Lambda** — Riftcodex's Cloudflare front 403s AWS
+     Lambda egress IPs, so there's no scheduled/automatic trigger. Run via
+     `pnpm --filter @deck-builder/functions sync:cards` from a machine with
+     AWS credentials and real DynamoDB access whenever cards need refreshing.
 
 4. **Read routes** — `packages/functions/src/cards/getCards.ts`
    - `GET /cards` — list/browse (supports filtering by `domain`, `type`, `set_id`
@@ -108,13 +119,11 @@ once card data is queryable, so it needs the `CardsTable` populated first.
      the app (for instant UI feedback) can use it.
 
 6. **Local dev**
-   - Sync script works against `dynalite` under the `local` stage, consistent
-     with `pnpm dev:functions`.
-   - `pnpm --filter @deck-builder/functions sync:cards` script for manual
-     invocation during development, separate from the scheduled prod trigger.
-   - Riftcodex has no documented rate limits, but local sync should still page
-     politely (small delay between requests) to avoid hammering a third-party
-     service during dev iteration.
+   - `pnpm sync:cards` defaults to the `local` stage/dynalite table
+     (`CARDS_TABLE=riftbound-functions-cards-local`).
+   - Against real AWS: `IS_OFFLINE= CARDS_TABLE=riftbound-functions-cards-<stage> AWS_REGION=<region> npx tsx scripts/sync-cards.ts`
+     with AWS credentials that can reach DynamoDB (an IAM user/profile, not
+     the GitHub Actions OIDC deploy role — that's CI-only).
 
 ## Open questions
 
@@ -128,9 +137,14 @@ once card data is queryable, so it needs the `CardsTable` populated first.
 
 ## Next steps
 
-1. Rewrite `packages/shared/src/types/card.ts` to match the Riftcodex shape.
-2. Add `CardsTable` to `serverless.yml`.
-3. Implement `syncCards.ts` and `getCards.ts`.
-4. Wire the EventBridge schedule into `serverless.yml`.
-5. Extend deck create/update handlers with Legend-domain legality checks.
+- [x] Rewrite `packages/shared/src/types/card.ts` to match the Riftcodex shape.
+- [x] Add `CardsTable` to `serverless.yml`.
+- [x] Implement `syncCards.ts` and `getCards.ts`.
+- [x] Confirmed EventBridge/Lambda scheduling doesn't work (Cloudflare 403s
+      AWS egress) — sync is manual-only for now.
+- [ ] Extend deck create/update handlers with Legend-domain legality checks
+      (blocked on those handlers not existing yet — only `getDecks` is
+      implemented).
+- [ ] Optional: follow up with `support@riftcodex.com` about allowlisting, to
+      revisit automatic scheduled sync.
 </content>

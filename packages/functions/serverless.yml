@@ -35,7 +35,6 @@ provider:
           Action:
             - dynamodb:Query
             - dynamodb:Scan
-            - dynamodb:BatchWriteItem
           Resource:
             - !GetAtt CardsTable.Arn
             - !Sub '${CardsTable.Arn}/index/*'
@@ -107,11 +106,6 @@ functions:
       - httpApi:
           path: /cards
           method: get
-  syncCards:
-    handler: src/cards/syncCards.handler
-    timeout: 60
-    events:
-      - schedule: rate(1 day)
 
 resources:
   Resources:
